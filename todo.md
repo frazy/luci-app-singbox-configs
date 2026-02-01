@@ -9,8 +9,8 @@
 **详细待办：**
 
 - [x] 创建 `plan.md` 和 `todo.md`。
-- [ ] 创建模拟的 `/etc/singbox/configs/` 目录及软链接目标目录 (`/etc/singbox/`)。
-- [ ] 放置 2-3 个示例 `singbox-config-*.json` 文件到模拟的 `configs` 目录。
+- [x] 创建模拟的 `/etc/singbox/configs/` 目录及软链接目标目录 (`/etc/singbox/`)。
+- [x] 放置 2-3 个示例 `singbox-config-*.json` 文件到模拟的 `configs` 目录。
 - [x] 编写一个 Lua 脚本来模拟 LuCI 环境和 HTTP 请求，测试 `singbox.lua` 中的各项功能（`do_config_manager`, `do_upload`, `do_activate`, `do_delete`, `do_download`）。
 - [x] 确保 `config_manager.htm` 可以在模拟环境下正确渲染（或至少验证其生成逻辑），可能通过输出 HTML 片段。
 - [x] 撰写 `app/luci-app-singbox/README.md`，详细说明编译和部署步骤。
