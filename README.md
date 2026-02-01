@@ -1,90 +1,107 @@
-# luci-app-singbox - OpenWrt LuCI Sing-Box Configuration Manager
+# luci-app-singbox - Sing-Box 配置文件管理器
 
-This LuCI application provides a web-based interface for managing multiple Sing-Box configuration JSON files on an OpenWrt device. It allows users to upload, list, activate, download, and delete Sing-Box configuration files.
+这是一个用于 OpenWrt LuCI 界面的应用程序，旨在提供对 sing-box 配置文件进行管理的功能，包括上传、激活、下载和删除配置文件。
 
-**Key Features:**
-- Upload new Sing-Box configuration JSON files.
-- List all available configuration files in a dedicated directory (`/etc/singbox/configs/`).
-- Activate a chosen configuration file by creating a symbolic link (`/etc/singbox/config.json`) to it, and automatically restarting the Sing-Box service.
-- Download existing configuration files for backup or modification.
-- Delete unwanted configuration files.
-- Manual restart option for the Sing-Box service.
+## 功能特性
 
-## Prerequisites
+*   **配置文件列表：** 显示 `/etc/singbox/configs/` 目录下所有可用的 sing-box 配置文件。
+*   **当前活动配置：** 标识当前被 `singbox` 服务使用的配置文件（通过软链接 `/etc/singbox/config.json` 指向）。
+*   **上传新配置：** 允许用户上传新的 sing-box 配置文件到指定目录。
+*   **激活配置：** 将选定的配置文件设置为当前活动的 `singbox` 配置，并通过重启 `singbox` 服务使其生效。
+*   **下载配置：** 允许用户下载现有配置文件。
+*   **删除配置：** 允许用户删除不再需要的配置文件。
 
-1.  **OpenWrt Build Environment:** You need a working OpenWrt build environment (matching your device's architecture and OpenWrt version, e.g., 23.05.3).
-2.  **Sing-Box Core:** The `singbox` executable must already be installed and configured on your OpenWrt device. This LuCI app assumes `singbox` reads its main configuration from `/etc/singbox/config.json` and can be restarted via `/etc/init.d/singbox restart`.
+## 目录结构
 
-## Installation (Compile from Source)
+```
+app/luci-app-singbox/
+├── files/
+│   └── etc/
+│       └── singbox/
+│           ├── config.json  # 软链接，指向当前活动的配置文件
+│           └── configs/     # 存储所有 sing-box 配置文件的目录
+│               ├── singbox-config-1.json
+│               └── singbox-config-2.json
+├── controller/
+│   └── singbox.lua          # LuCI 控制器，处理后端逻辑和路由
+├── view/
+│   └── singbox/
+│       └── config_manager.htm # LuCI 视图，提供前端用户界面
+├── Makefile                 # OpenWrt 包编译规则
+└── README.md                # 本文件
+```
 
-Follow these steps to compile `luci-app-singbox` and install it on your OpenWrt device:
+## 编译和安装
 
-1.  **Clone OpenWrt Source:** If you haven't already, clone the OpenWrt source code for your target version.
-    ```bash
-    git clone https://git.openwrt.org/openwrt/openwrt.git
-    cd openwrt
-    git checkout openwrt-23.05 # Or your desired branch/tag
-    ```
+**注意：** 本项目需要在 OpenWrt SDK 或完整的 OpenWrt 编译环境中进行编译。当前的沙盒环境无法进行完整的 `.ipk` 包编译。
 
-2.  **Add `luci-app-singbox` to Source Tree:** Copy the `luci-app-singbox` directory (this entire directory) into the `package/luci/applications/` directory of your OpenWrt source tree.
-    ```bash
-    cp -r /path/to/this/luci-app-singbox openwrt/package/luci/applications/
-    ```
+### 1. 将项目添加到 OpenWrt 源码
 
-3.  **Update Feeds:**
-    ```bash
-    ./scripts/feeds update -a
-    ./scripts/feeds install -a
-    ```
+将 `luci-app-singbox` 目录复制到 OpenWrt 源码的 `package/luci/applications/` 目录下。
 
-4.  **Configure OpenWrt Build:**
-    ```bash
-    make menuconfig
-    ```
-    Navigate to `LuCI` -> `Applications`, find `luci-app-singbox`, and select it by pressing `Y`. Save your configuration.
+```bash
+cp -r luci-app-singbox /path/to/openwrt/source/package/luci/applications/
+```
 
-5.  **Compile the Package:**
-    ```bash
-    make package/luci-app-singbox/compile V=s
-    # If you want to generate the .ipk directly without building a full firmware:
-    # make package/luci-app-singbox/install V=s
-    ```
-    The generated `.ipk` file will be located in `bin/packages/<target-architecture>/luci/`.
+### 2. 配置和编译
 
-## Deployment to OpenWrt Device
+进入 OpenWrt 源码根目录，更新 feeds 并安装 LuCI 相关的软件包：
 
-1.  **Transfer the `.ipk`:** Copy the generated `luci-app-singbox_*.ipk` file to your OpenWrt device using `scp` or `winscp`.
-    ```bash
-    scp bin/packages/<target-architecture>/luci/luci-app-singbox_*.ipk root@your_router_ip:/tmp/
-    ```
+```bash
+cd /path/to/openwrt/source
+./scripts/feeds update -a
+./scripts/feeds install -a
+```
 
-2.  **Install the Package on Router:** SSH into your OpenWrt router and install the package.
-    ```bash
-    ssh root@your_router_ip
-    opkg install /tmp/luci-app-singbox_*.ipk
-    ```
+运行 `make menuconfig`，在菜单中导航到 `LuCI -> Applications`，然后选择 `luci-app-singbox`。
 
-3.  **Clear LuCI Cache:**
-    ```bash
-    /etc/init.d/uhttpd restart
-    ```
-    Or simply clear your browser cache and refresh the LuCI interface.
+```bash
+make menuconfig
+```
 
-## Usage
+保存配置并退出。然后开始编译：
 
-1.  **Access LuCI:** Open your web browser and navigate to your OpenWrt router's LuCI interface (e.g., `http://192.168.1.1`).
-2.  **Navigate:** Go to `Services` -> `Sing-Box`.
-3.  **Manage Configurations:**
-    *   **Upload:** Use the "Upload Sing-Box Configuration" section to upload new `.json` files.
-    *   **Activate:** In the "Available Configurations" table, click "Activate" next to your desired configuration file. This will make it the active `config.json` for Sing-Box and restart the service.
-    *   **Download/Delete:** Use the respective buttons to download or delete configuration files.
-    *   **Restart Sing-Box:** Use the "Restart Sing-Box" button in the "Sing-Box Service Control" section to manually restart the service.
+```bash
+make V=s
+```
 
----
+编译完成后，`.ipk` 包将在 `bin/packages/<ARCH>/luci/` 目录下生成。
 
-**Important Notes for Testing (if not on a real OpenWrt device):**
+### 3. 安装到 OpenWrt 路由器
 
-This project was developed in a sandbox environment where full OpenWrt compilation was not possible. The core logic of `singbox.lua` has been validated through simulated file system operations and HTTP requests.
+将生成的 `luci-app-singbox_*.ipk` 包复制到您的 OpenWrt 路由器上，并通过 `opkg` 命令安装：
 
-- **File System Simulation:** The LuCI app expects Sing-Box configuration files to be stored in `/etc/singbox/configs/` and the active configuration to be symlinked as `/etc/singbox/config.json`. Ensure these directories and the symlink target exist and have proper permissions on your actual OpenWrt device.
-- **Service Restart:** The controller executes `/etc/init.d/singbox restart`. Ensure this init script exists and correctly manages your Sing-Box service.
+```bash
+opkg install luci-app-singbox_*.ipk
+```
+
+安装完成后，刷新 LuCI 界面，您将在菜单中找到 "Sing-Box 配置管理" 页面。
+
+## 后端逻辑 (controller/singbox.lua) 概述
+
+`singbox.lua` 控制器提供了以下 API 端点：
+
+*   **`_CBI(name)`:** 提供 LuCI 配置界面的通用模型，但在此应用中主要通过 `config_manager.htm` 直接管理。
+*   **`do_config_manager()`:** 用于渲染配置管理页面，列出所有配置文件，并标识当前活动配置。
+*   **`do_upload()`:** 处理配置文件上传。
+*   **`do_activate()`:** 激活选定的配置文件，更新软链接 `/etc/singbox/config.json`，并重启 sing-box 服务。
+*   **`do_delete()`:** 删除指定的配置文件。
+*   **`do_download()`:** 提供指定配置文件的下载。
+
+## 前端界面 (view/singbox/config_manager.htm) 概述
+
+`config_manager.htm` 文件使用 LuCI 模板语法来构建用户界面，包括：
+
+*   一个文件上传表单。
+*   一个显示配置文件列表的表格，包含文件名、状态（是否激活）、以及激活、下载、删除操作按钮。
+*   JavaScript 代码用于处理 AJAX 请求和界面交互。
+
+## 依赖
+
+*   `singbox` 服务必须已安装并运行在 OpenWrt 系统上。
+*   需要 `uci` 命令来管理 OpenWrt 配置。
+*   需要 `nixio.fs` 模块来进行文件系统操作。
+
+## 许可证
+
+[待定，可添加许可证信息]
