@@ -38,7 +38,11 @@ jobs:
         run: |
           cd sdk
           ./scripts/feeds update -a
-          ./scripts/feeds install -a
+          # 优化：只安装必要的依赖包，而不是安装所有包 (install -a) 
+          # 安装 luci-base (LuCI 核心) 和 singbox (因为是依赖)
+          ./scripts/feeds install luci-base singbox
+          # 安装所有 LuCI 包作为补充（通常很快）
+          ./scripts/feeds install -p luci -a
 
       - name: Prepare package
         run: |
@@ -51,13 +55,14 @@ jobs:
         run: |
           cd sdk
           make defconfig
-          make package/luci-app-singbox/compile V=s -j1
+          # V=s 显示详细日志，-j$(nproc) 并行编译加速
+          make package/luci-app-singbox/compile V=s -j$(nproc)
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-singbox-aarch64_cortex-a53
-          path: sdk/bin/packages/aarch64_cortex-a53/base/*.ipk
+          path: sdk/bin/packages/aarch64_cortex-a53/base/luci-app-singbox*.ipk
           if-no-files-found: error
 
   release:
