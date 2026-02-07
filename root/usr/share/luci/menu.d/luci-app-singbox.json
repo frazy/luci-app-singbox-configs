@@ -1,0 +1,13 @@
+{
+    "admin/services/singbox": {
+        "title": "Sing-Box",
+        "action": { "type": "alias", "path": "admin/services/singbox/config_manager" },
+        "order": 60,
+        "dependent": true
+    },
+    "admin/services/singbox/config_manager": {
+        "title": "Configuration Manager",
+        "action": { "type": "call", "path": "luci.controller.singbox", "method": "do_config_manager" },
+        "order": 1
+    }
+}

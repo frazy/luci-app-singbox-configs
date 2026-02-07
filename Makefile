@@ -10,7 +10,6 @@ PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=frazy
 
 LUCI_TITLE:=LuCI Support for Sing-Box
-LUCI_DESCRIPTION:=Configuration interface for Sing-Box configuration files management
 LUCI_DEPENDS:=+luci-base +sing-box
 LUCI_PKGARCH:=all
 
