@@ -1,5 +1,5 @@
--- Copyright (C) 2024 Your Name <your_email@example.com>
--- This is free software, licensed under the Apache License, Version 2.0 .
+-- Copyright (C) 2024 frazy
+-- This is free software, licensed under the Apache License, Version 2.0.
 
 module("luci.controller.singbox", package.seeall)
 
@@ -8,7 +8,7 @@ function index()
     -- For now, we assume singbox config file might exist.
     -- If singbox service is running from a specific config, we need to know its path.
     -- Let's define a base path for singbox configurations that our LuCI app will manage.
-    local conf_base_path = "/etc/singbox/" -- This should be where singbox looks for its main config or where we put a symlink
+    local conf_base_path = "/etc/sing-box/" -- This should be where singbox looks for its main config or where we put a symlink
 
     entry({"admin", "services", "singbox"}, alias("admin", "services", "singbox", "config_manager"), _("Sing-Box"), 60).dependent = true
 
@@ -19,8 +19,8 @@ function index()
     entry({"admin", "services", "singbox", "config_manager", "download"}, call("do_download"), nil).leaf = true
 end
 
-local config_dir = "/etc/singbox/configs/"
-local active_config_symlink = "/etc/singbox/config.json" -- Sing-box usually reads from /etc/singbox/config.json
+local config_dir = "/etc/sing-box/configs/"
+local active_config_symlink = "/etc/sing-box/config.json" -- Sing-box reads from /etc/sing-box/config.json
 
 local function get_config_files()
     local files = {}
@@ -98,7 +98,7 @@ function do_activate()
             nixio.fs.symlink(target_path, active_config_symlink)
 
             -- Restart singbox service (this command might vary depending on actual singbox init script)
-            luci.sys.call("/etc/init.d/singbox restart &>/dev/null &")
+            luci.sys.call("/etc/init.d/sing-box restart &>/dev/null &")
 
             luci.http.redirect(luci.dispatcher.build_url("admin", "services", "singbox", "config_manager"))
             return

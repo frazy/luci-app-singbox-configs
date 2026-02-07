@@ -1,0 +1,14 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+bin/
+build/
+*.ipk
+
+# OS files
+.DS_Store
+Thumbs.db

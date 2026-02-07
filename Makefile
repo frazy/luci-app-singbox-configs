@@ -1,18 +1,20 @@
-# Copyright (C) 2024 Your Name <your_email@example.com>
-#
-# This is free software, licensed under the Apache License, Version 2.0 .
-#
+# Copyright (C) 2024 frazy
+# This is free software, licensed under the Apache License, Version 2.0.
 
 include $(TOPDIR)/rules.mk
-
-LUCI_TITLE:=LuCI Support for Sing-Box
-LUCI_DESCRIPTION:=Configuration interface for Sing-Box
-LUCI_DEPENDS:=+singbox
 
 PKG_NAME:=luci-app-singbox
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
+PKG_LICENSE:=Apache-2.0
+PKG_MAINTAINER:=frazy
+
+LUCI_TITLE:=LuCI Support for Sing-Box
+LUCI_DESCRIPTION:=Configuration interface for Sing-Box configuration files management
+LUCI_DEPENDS:=+luci-base +singbox
+LUCI_PKGARCH:=all
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
+$(eval $(call BuildPackage,luci-app-singbox))
