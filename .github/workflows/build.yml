@@ -1,4 +1,4 @@
-# OpenWrt LuCI 应用编译工作流
+# OpenWrt 23.05 LuCI 应用编译工作流
 name: Build OpenWrt Package
 
 on:
@@ -8,36 +8,51 @@ on:
       - 'v*'
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build ${{ matrix.arch }}
+    name: Build for OpenWrt 23.05 aarch64
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch:
-          - x86_64
-          - aarch64_generic
-          - arm_cortex-a7_neon-vfpv4
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build with OpenWrt SDK
-        uses: openwrt/gh-action-sdk@main
-        env:
-          ARCH: ${{ matrix.arch }}
-          FEEDNAME: packages_ci
-          PACKAGES: luci-app-singbox
-          NO_REFRESH_CHECK: true
+      - name: Prepare build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
 
-      - name: Upload artifacts
+      - name: Download OpenWrt SDK
+        run: |
+          wget -q https://downloads.openwrt.org/releases/23.05.3/targets/rockchip/armv8/openwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          tar -xf openwrt-sdk-*.tar.xz
+          mv openwrt-sdk-* sdk
+
+      - name: Setup feeds and package
+        run: |
+          cd sdk
+          # 更新 feeds
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          # 创建包目录并复制文件
+          mkdir -p package/luci-app-singbox
+          cp -r $GITHUB_WORKSPACE/Makefile package/luci-app-singbox/
+          cp -r $GITHUB_WORKSPACE/files package/luci-app-singbox/
+
+      - name: Build package
+        run: |
+          cd sdk
+          make defconfig
+          make package/luci-app-singbox/compile V=s
+
+      - name: Find and upload ipk
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-singbox-${{ matrix.arch }}
-          path: bin/packages/${{ matrix.arch }}/packages_ci/*.ipk
+          name: luci-app-singbox-aarch64
+          path: sdk/bin/packages/*/base/*.ipk
+          if-no-files-found: warn
 
   release:
     name: Create Release
@@ -46,7 +61,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     
     steps:
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
