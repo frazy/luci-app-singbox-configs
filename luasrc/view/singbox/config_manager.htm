@@ -1,87 +1,98 @@
 <%+header%>
-
-<h2><a id="content" name="content"><%=translate("Sing-Box Configuration Manager")%></a></h2>
-
+<style>
+.inline-form-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.inline-form-group label{font-weight:bold;min-width:100px}
+.inline-form-group input[type="file"]{flex-grow:1;max-width:400px}
+.status-active{color:#28a745;font-weight:bold}
+.status-inactive{color:#6c757d}
+.action-btn-group{display:flex;gap:5px}
+/* Remove custom button styles preventing theme conflicts */
+</style>
+<h2><a id="content" name="content"><%:Sing-Box Configuration Manager%></a></h2>
 <div class="cbi-map">
-    <fieldset class="cbi-section">
-        <legend><%=translate("Upload Sing-Box Configuration")%></legend>
-        <form method="post" action="<%=url("admin/services/singbox/config_manager/upload")%>" enctype="multipart/form-data">
-            <div class="cbi-value">
-                <label class="cbi-value-title" for="singbox_config_file"><%=translate("Configuration File")%></label>
-                <div class="cbi-value-field">
-                    <input type="file" id="singbox_config_file" name="singbox_config_file" accept=".json" />
-                    <input type="text" id="filename" name="filename" placeholder="<%=translate("Optional: New filename (must end with .json)")%>" style="width: 250px;" />
-                </div>
-            </div>
-            <div class="cbi-value">
-                <label class="cbi-value-title"></label>
-                <div class="cbi-value-field">
-                    <input type="submit" value="<%=translate("Upload")%>" class="cbi-button cbi-button-apply" />
-                </div>
-            </div>
-        </form>
-        <% if luci.http.form_value("error") then %>
-            <p class="error"><%=translate("Error: ")%><%=luci.http.form_value("error")%></p>
-        <% end %>
-    </fieldset>
-
-    <fieldset class="cbi-section">
-        <legend><%=translate("Available Configurations")%></legend>
-        <div class="cbi-section-descr">
-            <%=translate("Select an active configuration for Sing-Box. The active configuration will be symlinked to /etc/singbox/config.json and the service will be restarted.")%>
-        </div>
-
-        <table class="cbi-section-table">
-            <tr class="cbi-section-table-titles">
-                <th class="cbi-section-table-cell"><%=translate("Filename")%></th>
-                <th class="cbi-section-table-cell"><%=translate("Status")%></th>
-                <th class="cbi-section-table-cell" style="width:10%"><%=translate("Actions")%></th>
-            </tr>
-            <% if #config_files > 0 then %>
-                <% for _, file in ipairs(config_files) do %>
-                    <tr class="cbi-row<%= (file == active_config) and ' cbi-row-active' or '' %>">
-                        <td class="cbi-value-field"><%=file%></td>
-                        <td class="cbi-value-field">
-                            <% if file == active_config then %>
-                                <span style="color:green"><%=translate("Active")%></span>
-                            <% else %>
-                                <%=translate("Inactive")%>
-                            <% end %>
-                        </td>
-                        <td class="cbi-value-field">
-                            <form style="display:inline;" method="post" action="<%=url("admin/services/singbox/config_manager/activate")%>">
-                                <input type="hidden" name="filename" value="<%=file%>" />
-                                <input type="submit" value="<%=translate("Activate")%>" class="cbi-button cbi-button-action" <%= (file == active_config) and 'disabled' or '' %> />
-                            </form>
-                            <form style="display:inline;" method="post" action="<%=url("admin/services/singbox/config_manager/download")%>">
-                                <input type="hidden" name="filename" value="<%=file%>" />
-                                <input type="submit" value="<%=translate("Download")%>" class="cbi-button cbi-button-neutral" />
-                            </form>
-                            <form style="display:inline;" method="post" action="<%=url("admin/services/singbox/config_manager/delete")%>" onsubmit="return confirm('<%=translate("Are you sure you want to delete this configuration file?")%>');">
-                                <input type="hidden" name="filename" value="<%=file%>" />
-                                <input type="submit" value="<%=translate("Delete")%>" class="cbi-button cbi-button-danger" />
-                            </form>
-                        </td>
-                    </tr>
-                <% end %>
-            <% else %>
-                <tr class="cbi-row">
-                    <td class="cbi-value-field" colspan="3"><%=translate("No configuration files found.")%></td>
-                </tr>
-            <% end %>
-        </table>
-    </fieldset>
-
-    <fieldset class="cbi-section">
-        <legend><%=translate("Sing-Box Service Control")%></legend>
-        <div class="cbi-section-descr">
-            <%=translate("Restart Sing-Box service to apply changes or troubleshoot.")%>
-        </div>
-        <form method="post" action="<%=url("admin/services/singbox/config_manager/activate")%>">
-            <input type="hidden" name="filename" value="<%=active_config%>" />
-            <input type="submit" value="<%=translate("Restart Sing-Box")%>" class="cbi-button cbi-button-action" />
-        </form>
-    </fieldset>
+<fieldset class="cbi-section">
+<legend><%:Upload Configuration%></legend>
+<form method="post" action="<%=url([[admin]], [[services]], [[singbox]], [[config_manager]], [[upload]])%>" enctype="multipart/form-data">
+<div class="cbi-value">
+<div class="inline-form-group">
+<label for="singbox_config_file"><%:Configuration File:%></label>
+<input class="cbi-input-file" type="file" id="singbox_config_file" name="singbox_config_file" accept=".json" />
+<input class="cbi-button cbi-button-apply" type="submit" value="<%:Upload%>" />
 </div>
-
+</div>
+</form>
+<% if error_msg then %>
+<div class="cbi-value">
+<p class="error" style="color: red; font-weight: bold;"><%:Error:%> <%=error_msg%></p>
+</div>
+<% end %>
+</fieldset>
+<fieldset class="cbi-section">
+<legend><%:Available Configurations%></legend>
+<div class="cbi-section-descr"><%:Select an active configuration for Sing-Box.%></div>
+<table class="cbi-section-table">
+<thead>
+<tr class="cbi-section-table-titles">
+<th class="cbi-section-table-cell" style="text-align: left; width: 40%;"><%:Filename%></th>
+<th class="cbi-section-table-cell" style="text-align: left; width: 20%;"><%:Status%></th>
+<th class="cbi-section-table-cell" style="text-align: left; width: 40%;"><%:Actions%></th>
+</tr>
+</thead>
+<tbody>
+<% if config_files and #config_files > 0 then %>
+<% for _, file in ipairs(config_files) do %>
+<tr class="cbi-section-table-row">
+<td class="cbi-value-field"><%=file%></td>
+<td class="cbi-value-field">
+<% if file == active_config then %>
+<span class="status-active"><%:Active%></span>
+<% else %>
+<span class="status-inactive"><%:Inactive%></span>
+<% end %>
+</td>
+<td class="cbi-value-field">
+<div class="action-btn-group">
+<% if file ~= active_config then %>
+<form style="display:inline;" method="post" action="<%=url([[admin]], [[services]], [[singbox]], [[config_manager]], [[activate]])%>">
+<input type="hidden" name="filename" value="<%=file%>" />
+<input class="cbi-button cbi-button-apply" type="submit" value="<%:Activate%>" />
+</form>
+<% else %>
+<input class="cbi-button cbi-button-neutral" type="button" value="<%:Active%>" disabled />
+<% end %>
+<form style="display:inline;" method="post" action="<%=url([[admin]], [[services]], [[singbox]], [[config_manager]], [[download]])%>">
+<input type="hidden" name="filename" value="<%=file%>" />
+<input class="cbi-button cbi-button-neutral" type="submit" value="<%:Download%>" />
+</form>
+<form style="display:inline;" method="post" action="<%=url([[admin]], [[services]], [[singbox]], [[config_manager]], [[delete]])%>" onsubmit="return confirm('<%:Are you sure you want to delete this configuration?%>');">
+<input type="hidden" name="filename" value="<%=file%>" />
+<input class="cbi-button cbi-button-reset" type="submit" value="<%:Delete%>" />
+</form>
+</div>
+</td>
+</tr>
+<% end %>
+<% else %>
+<tr class="cbi-section-table-row">
+<td class="cbi-value-field" colspan="3" style="text-align: center; padding: 20px;">
+<em><%:No configuration files found. Please upload one.%></em>
+</td>
+</tr>
+<% end %>
+</tbody>
+</table>
+</fieldset>
+<fieldset class="cbi-section">
+<legend><%:Service Control%></legend>
+<div class="cbi-value">
+<form method="post" action="<%=url([[admin]], [[services]], [[singbox]], [[config_manager]], [[activate]])%>">
+<input type="hidden" name="filename" value="<%=active_config%>" />
+<div class="inline-form-group">
+<label><%:Current Active Config:%> <%=active_config or "None"%></label>
+<input class="cbi-button cbi-button-apply" type="submit" value="<%:Restart Sing-Box Service%>" />
+</div>
+</form>
+</div>
+</fieldset>
+</div>
 <%+footer%>
